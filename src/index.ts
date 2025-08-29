@@ -2,47 +2,161 @@ import 'dotenv/config';
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
 
-const books = [
-  {
-    title: 'The Awakening',
-    author: 'Kate Chopin',
-  },
-  {
-    title: 'City of Glass',
-    author: 'Paul Auster',
-  },
-];
+import { PrismaClient } from '@prisma/client';
+const prismaClient = new PrismaClient();
 
-// A schema is a collection of type definitions (hence "typeDefs")
-// that together define the "shape" of queries that are executed against
-// your data.
 const typeDefs = `#graphql
-  # Comments in GraphQL strings (such as this one) start with the hash (#) symbol.
-
-  # This "Book" type defines the queryable fields for every book in our data source.
-  type Book {
-    title: String
-    author: String
+  type User {
+    id: ID!
+    name: String!
+    email: String!
+    password: String!
+    bio: String
+    createdAt: String!
+    posts: [Post!]!
+    comments: [Comment!]!
+    likes: [Like!]!
   }
-
-  # The "Query" type is special: it lists all of the available queries that
-  # clients can execute, along with the return type for each. In this
-  # case, the "books" query returns an array of zero or more Books (defined above).
+  type Post {
+    id: ID!
+    title: String!
+    content: String!
+    published: Boolean!
+    authorId: Int!
+    author: User!
+    comments: [Comment!]!
+    likes: [Like!]!
+  }
+  type Comment {
+    id: ID!
+    content: String!
+    authorId: Int!
+    postId: Int!
+    author: User!
+    post: Post!
+    likes: [Like!]!
+  }
+  type Like {
+    id: ID!
+    userId: Int!
+    postId: Int!
+    user: User!
+    post: Post!
+  }
   type Query {
-    books: [Book]
+    users: [User]
+    posts: [Post]
+    comments: [Comment]
+    likes: [Like]
   }
 `;
 
-// Resolvers define how to fetch the types defined in your schema.
-// This resolver retrieves books from the "books" array above.
 const resolvers = {
   Query: {
-    books: () => books,
+    users: async (parent, args, ctx, info) => {
+      const users = await prismaClient.user.findMany();
+      return users;
+    },
+    posts: async (parent, args, ctx, info) => {
+      const posts = await prismaClient.post.findMany();
+      return posts;
+    },
+    comments: async (parent, args, ctx, info) => {
+      const comments = await prismaClient.comment.findMany();
+      return comments;
+    },
+    likes: async (parent, args, ctx, info) => {
+      const likes = await prismaClient.like.findMany();
+      return likes;
+    },
   },
+  User: {
+    posts: async (parent, args, contextValue, info) => {
+      const userId = parent.id;
+      const posts = await prismaClient.post.findMany({
+        where: { authorId: userId }
+      });
+      return posts;
+    },
+    comments: async (parent, args, contextValue, info) => {
+      const userId = parent.id;
+      const comments = await prismaClient.comment.findMany({
+        where: { authorId: userId }
+      });
+      return comments;
+    },
+    likes: async (parent, args, contextValue, info) => {
+      const userId = parent.id;
+      const likes = await prismaClient.like.findMany({
+        where: { userId: userId }
+      });
+      return likes;
+    },
+  },
+  Post: {
+    author: async (parent, args, ctx, info) => {
+      const authorId = parent.authorId;
+      const posts = await prismaClient.post.findMany({
+        where: { authorId: authorId }
+      });
+      return posts;
+    },
+    comments: async (parent, args, ctx, info) => {
+      const postId = parent.id;
+      const comments = await prismaClient.comment.findMany({
+        where: { postId: postId }
+      });
+      return comments;
+    },
+    likes: async (parent, args, ctx, info) => {
+      const postId = parent.id
+      const likes = await prismaClient.like.findMany({
+        where: { postId: postId }
+      });
+      return likes;
+    },
+  },
+  Comment: {
+    post: async (parent, args, ctx, info) => {
+      const postId = parent.postId;
+      const post = await prismaClient.post.findFirst({
+        where: { id: postId }
+      });
+      return post;
+    },
+    author: async (parent, args, ctx, info) => {
+      const authorId = parent.authorId;
+      const author = await prismaClient.user.findFirst({
+        where: { id: authorId }
+      });
+      return author;
+    },
+    likes: async (parent, args, ctx, info) => {
+      const postId = parent.id;
+      const likes = await prismaClient.like.findMany({
+        where: { postId: postId }
+      });
+      return likes;
+    },
+  },
+  Like: {
+    post: async (parent, args, ctx, info) => {
+      const postId = parent.postId;
+      const post = await prismaClient.post.findFirst({
+        where: { id: postId }
+      });
+      return post;
+    },
+    user: async (parent, args, ctx, info) => {
+      const authorId = parent.authorId;
+      const user = await prismaClient.user.findFirst({
+        where: { id: authorId }
+      });
+      return user;
+    },
+  }
 };
 
-// The ApolloServer constructor requires two parameters: your schema
-// definition and your set of resolvers.
 const server = new ApolloServer({
   typeDefs,
   resolvers,
@@ -52,10 +166,20 @@ const server = new ApolloServer({
 //  1. creates an Express app
 //  2. installs your ApolloServer instance as middleware
 //  3. prepares your app to handle incoming requests
-const { url } = await startStandaloneServer(server, {
+// const { url } = await startStandaloneServer(server, {
+//   listen: { 
+//     port: +process.env.APP_PORT || 4000 
+//   },
+// });
+// console.log(`🚀  Server ready at: ${url}`);
+
+startStandaloneServer(server, {
   listen: { 
     port: +process.env.APP_PORT || 4000 
   },
+}).then((data) => {
+  const { url } = data;
+  console.log(`🚀  Server ready at: ${url}`);
+}).catch((err) => {
+  console.log('error while running server:', err);
 });
-
-console.log(`🚀  Server ready at: ${url}`);
