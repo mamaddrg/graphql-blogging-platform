@@ -6,124 +6,123 @@ import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcrypt';
 
+import type { AppContextModel } from './models';
 import { PrismaClient } from '@prisma/client';
 
-const prismaClient = new PrismaClient();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 const typeDefs = readFileSync(path.join(__dirname, 'schema.graphql'), 'utf-8');
 
 const resolvers = {
   Query: {
-    users: async (parent, args, ctx, info) => {
-      const users = await prismaClient.user.findMany();
+    users: async (parent, args, ctx: AppContextModel, info) => {
+      const users = await ctx.dbClient.user.findMany();
       return users;
     },
-    posts: async (parent, args, ctx, info) => {
-      const posts = await prismaClient.post.findMany();
+    posts: async (parent, args, ctx: AppContextModel, info) => {
+      const posts = await ctx.dbClient.post.findMany();
       return posts;
     },
-    comments: async (parent, args, ctx, info) => {
-      const comments = await prismaClient.comment.findMany();
+    comments: async (parent, args, ctx: AppContextModel, info) => {
+      const comments = await ctx.dbClient.comment.findMany();
       return comments;
     },
-    likes: async (parent, args, ctx, info) => {
-      const likes = await prismaClient.like.findMany();
+    likes: async (parent, args, ctx: AppContextModel, info) => {
+      const likes = await ctx.dbClient.like.findMany();
       return likes;
     },
   },
   User: {
-    posts: async (parent, args, contextValue, info) => {
+    posts: async (parent, args, ctx: AppContextModel, info) => {
       const userId = parent.id;
-      const posts = await prismaClient.post.findMany({
+      const posts = await ctx.dbClient.post.findMany({
         where: { authorId: userId }
       });
       return posts;
     },
-    comments: async (parent, args, contextValue, info) => {
+    comments: async (parent, args, ctx: AppContextModel, info) => {
       const userId = parent.id;
-      const comments = await prismaClient.comment.findMany({
+      const comments = await ctx.dbClient.comment.findMany({
         where: { authorId: userId }
       });
       return comments;
     },
-    likes: async (parent, args, contextValue, info) => {
+    likes: async (parent, args, ctx: AppContextModel, info) => {
       const userId = parent.id;
-      const likes = await prismaClient.like.findMany({
+      const likes = await ctx.dbClient.like.findMany({
         where: { userId: userId }
       });
       return likes;
     },
   },
   Post: {
-    author: async (parent, args, ctx, info) => {
+    author: async (parent, args, ctx: AppContextModel, info) => {
       const authorId = parent.authorId;
-      const posts = await prismaClient.post.findMany({
+      const posts = await ctx.dbClient.post.findMany({
         where: { authorId: authorId }
       });
       return posts;
     },
-    comments: async (parent, args, ctx, info) => {
+    comments: async (parent, args, ctx: AppContextModel, info) => {
       const postId = parent.id;
-      const comments = await prismaClient.comment.findMany({
+      const comments = await ctx.dbClient.comment.findMany({
         where: { postId: postId }
       });
       return comments;
     },
-    likes: async (parent, args, ctx, info) => {
+    likes: async (parent, args, ctx: AppContextModel, info) => {
       const postId = parent.id
-      const likes = await prismaClient.like.findMany({
+      const likes = await ctx.dbClient.like.findMany({
         where: { postId: postId }
       });
       return likes;
     },
   },
   Comment: {
-    post: async (parent, args, ctx, info) => {
+    post: async (parent, args, ctx: AppContextModel, info) => {
       const postId = parent.postId;
-      const post = await prismaClient.post.findFirst({
+      const post = await ctx.dbClient.post.findFirst({
         where: { id: postId }
       });
       return post;
     },
-    author: async (parent, args, ctx, info) => {
+    author: async (parent, args, ctx: AppContextModel, info) => {
       const authorId = parent.authorId;
-      const author = await prismaClient.user.findFirst({
+      const author = await ctx.dbClient.user.findFirst({
         where: { id: authorId }
       });
       return author;
     },
-    likes: async (parent, args, ctx, info) => {
+    likes: async (parent, args, ctx: AppContextModel, info) => {
       const postId = parent.id;
-      const likes = await prismaClient.like.findMany({
+      const likes = await ctx.dbClient.like.findMany({
         where: { postId: postId }
       });
       return likes;
     },
   },
   Like: {
-    post: async (parent, args, ctx, info) => {
+    post: async (parent, args, ctx: AppContextModel, info) => {
       const postId = parent.postId;
-      const post = await prismaClient.post.findFirst({
+      const post = await ctx.dbClient.post.findFirst({
         where: { id: postId }
       });
       return post;
     },
-    user: async (parent, args, ctx, info) => {
+    user: async (parent, args, ctx: AppContextModel, info) => {
       const authorId = parent.authorId;
-      const user = await prismaClient.user.findFirst({
+      const user = await ctx.dbClient.user.findFirst({
         where: { id: authorId }
       });
       return user;
     },
   },
   Mutation: {
-    createUser: async (parent, args, ctx, info) => {
+    createUser: async (parent, args, ctx: AppContextModel, info) => {
       if (args.password.length < 8) {
         throw new Error('Password should be at least 8 characters');
       }
-      const isEmailTaken = await prismaClient.user.findFirst({ 
+      const isEmailTaken = await ctx.dbClient.user.findFirst({ 
         where: { email: args.email }
       });
       if (isEmailTaken) {
@@ -139,7 +138,7 @@ const resolvers = {
         bio: args.bio ?? null
       }
 
-      const result = await prismaClient.user.create({ data: userData });
+      const result = await ctx.dbClient.user.create({ data: userData });
       return result;
     }
   }
@@ -155,6 +154,12 @@ startStandaloneServer(server, {
   listen: { 
     port: +process.env.APP_PORT || 4000 
   },
+  context: async ({ req, res }) => {
+    const prismaClient = new PrismaClient();
+    return {
+      dbClient: prismaClient
+    }
+  }
 }).then((data) => {
   const { url } = data;
   console.log(`🚀  Server ready at: ${url}`);
