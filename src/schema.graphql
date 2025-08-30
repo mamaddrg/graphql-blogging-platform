@@ -47,5 +47,33 @@ type Query {
 }
 
 type Mutation {
-  createUser(name: String!, email: String!, password: String!, bio: String): User!
+  createUser(data: CreateUserInput!): User!
+  createPost(data: CreatePostInput!): Post!
+  createComment(data: CreateCommentInput!): Comment!
+  createLike(data: CreateLikeInput!): Like!
+}
+
+input CreateUserInput {
+  name: String!
+  email: String!
+  password: String!
+  bio: String
+}
+
+input CreatePostInput {
+  title: String!
+  content: String!
+  published: Boolean
+  authorId: Int!
+}
+
+input CreateCommentInput {
+  content: String!
+  authorId: Int!
+  postId: Int!
+}
+
+input CreateLikeInput {
+  userId: Int!
+  postId: Int!
 }
