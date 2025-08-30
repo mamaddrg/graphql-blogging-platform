@@ -1,6 +1,7 @@
 import 'dotenv/config';
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
+import bcrypt from 'bcrypt';
 
 import { PrismaClient } from '@prisma/client';
 const prismaClient = new PrismaClient();
@@ -48,6 +49,9 @@ const typeDefs = `#graphql
     posts: [Post]
     comments: [Comment]
     likes: [Like]
+  }
+  type Mutation {
+    createUser(name: String!, email: String!, password: String!, bio: String): User!
   }
 `;
 
@@ -154,6 +158,31 @@ const resolvers = {
       });
       return user;
     },
+  },
+  Mutation: {
+    createUser: async (parent, args, ctx, info) => {
+      if (args.password.length < 8) {
+        throw new Error('Password should be at least 8 characters');
+      }
+      const isEmailTaken = await prismaClient.user.findFirst({ 
+        where: { email: args.email }
+      });
+      if (isEmailTaken) {
+        throw new Error("Email is already in use");
+      }
+
+      const salt = await bcrypt.genSalt();
+      const hashedPass = bcrypt.hashSync(args.password, salt);
+      const userData = {
+        name: args.name,
+        email: args.email,
+        password: hashedPass,
+        bio: args.bio ?? null
+      }
+
+      const result = await prismaClient.user.create({ data: userData });
+      return result;
+    }
   }
 };
 
