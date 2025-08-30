@@ -1,59 +1,18 @@
 import 'dotenv/config';
 import { ApolloServer } from '@apollo/server';
 import { startStandaloneServer } from '@apollo/server/standalone';
+import * as path from 'path';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
 import bcrypt from 'bcrypt';
 
 import { PrismaClient } from '@prisma/client';
-const prismaClient = new PrismaClient();
 
-const typeDefs = `#graphql
-  type User {
-    id: ID!
-    name: String!
-    email: String!
-    password: String!
-    bio: String
-    createdAt: String!
-    posts: [Post!]!
-    comments: [Comment!]!
-    likes: [Like!]!
-  }
-  type Post {
-    id: ID!
-    title: String!
-    content: String!
-    published: Boolean!
-    authorId: Int!
-    author: User!
-    comments: [Comment!]!
-    likes: [Like!]!
-  }
-  type Comment {
-    id: ID!
-    content: String!
-    authorId: Int!
-    postId: Int!
-    author: User!
-    post: Post!
-    likes: [Like!]!
-  }
-  type Like {
-    id: ID!
-    userId: Int!
-    postId: Int!
-    user: User!
-    post: Post!
-  }
-  type Query {
-    users: [User]
-    posts: [Post]
-    comments: [Comment]
-    likes: [Like]
-  }
-  type Mutation {
-    createUser(name: String!, email: String!, password: String!, bio: String): User!
-  }
-`;
+const prismaClient = new PrismaClient();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const typeDefs = readFileSync(path.join(__dirname, 'schema.graphql'), 'utf-8');
 
 const resolvers = {
   Query: {
@@ -191,16 +150,6 @@ const server = new ApolloServer({
   resolvers,
 });
 
-// Passing an ApolloServer instance to the `startStandaloneServer` function:
-//  1. creates an Express app
-//  2. installs your ApolloServer instance as middleware
-//  3. prepares your app to handle incoming requests
-// const { url } = await startStandaloneServer(server, {
-//   listen: { 
-//     port: +process.env.APP_PORT || 4000 
-//   },
-// });
-// console.log(`🚀  Server ready at: ${url}`);
 
 startStandaloneServer(server, {
   listen: { 
