@@ -5,6 +5,7 @@ type User {
   password: String!
   bio: String
   createdAt: String!
+  updatedAt: String
   posts: [Post!]!
   comments: [Comment!]!
   likes: [Like!]!
@@ -16,6 +17,8 @@ type Post {
   content: String!
   published: Boolean!
   authorId: Int!
+  createdAt: String!
+  updatedAt: String
   author: User!
   comments: [Comment!]!
   likes: [Like!]!
@@ -26,6 +29,8 @@ type Comment {
   content: String!
   authorId: Int!
   postId: Int!
+  createdAt: String!
+  updatedAt: String
   author: User!
   post: Post!
   likes: [Like!]!
@@ -35,6 +40,7 @@ type Like {
   id: ID!
   userId: Int!
   postId: Int!
+  createdAt: String!
   user: User!
   post: Post!
 }

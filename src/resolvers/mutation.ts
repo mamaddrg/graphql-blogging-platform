@@ -1,9 +1,15 @@
 import bcrypt from 'bcrypt';
 
-import type { AppContextModel } from '../models';
+import type { 
+  AppContextModel,
+  UserModel,
+  PostModel,
+  CommentModel,
+  LikeModel
+} from '../models';
 
 export const Mutation = {
-  createUser: async (parent, args, ctx: AppContextModel, info) => {
+  createUser: async (parent, args, ctx: AppContextModel, info): Promise<UserModel> => {
     const { data } = args;
     if (data.password.length < 8) {
       throw new Error('Password should be at least 8 characters');
@@ -23,7 +29,7 @@ export const Mutation = {
     const result = await ctx.dbClient.user.create({ data: userData });
     return result;
   },
-  createPost: async (parent, args, ctx: AppContextModel, info) => {
+  createPost: async (parent, args, ctx: AppContextModel, info): Promise<PostModel> => {
     const { data } = args;
     const isUserAvailable = ctx.dbClient.user.findFirst({
       where: { id: data.authorId }
@@ -34,7 +40,7 @@ export const Mutation = {
     const result = await ctx.dbClient.post.create({ data });
     return result;
   },
-  createComment: async (parent, args, ctx: AppContextModel, info) => {
+  createComment: async (parent, args, ctx: AppContextModel, info): Promise<CommentModel> => {
     const { data } = args;
     const isUserAvailable = ctx.dbClient.user.findFirst({
       where: { id: data.authorId }
@@ -51,7 +57,7 @@ export const Mutation = {
     const result = await ctx.dbClient.comment.create({ data });
     return result;
   },
-  createLike: async (parent, args, ctx: AppContextModel, info) => {
+  createLike: async (parent, args, ctx: AppContextModel, info): Promise<LikeModel> => {
     const { data } = args;
     const isUserAvailable = ctx.dbClient.user.findFirst({
       where: { id: data.userId }
