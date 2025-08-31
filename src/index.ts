@@ -36,7 +36,8 @@ startStandaloneServer(server, {
   context: async ({ req, res }) => {
     const prismaClient = new PrismaClient();
     return {
-      dbClient: prismaClient
+      dbClient: prismaClient,
+      request: req
     }
   }
 }).then((data) => {

@@ -1,11 +1,16 @@
-import bcrypt from 'bcrypt';
-
+import { 
+  generateJwtToken, 
+  extractJwtAuth, 
+  hashPassword, 
+  comparePasses 
+} from '../utils/index.js';
 import type { 
   AppContextModel,
   UserModel,
   PostModel,
   CommentModel,
-  LikeModel
+  LikeModel,
+  AuthModel
 } from '../models';
 
 export const Mutation = {
@@ -14,14 +19,13 @@ export const Mutation = {
     if (data.password.length < 8) {
       throw new Error('Password should be at least 8 characters');
     }
-    const isEmailTaken = await ctx.dbClient.user.findFirst({ 
+    const isEmailTaken = await ctx.dbClient.user.findUnique({ 
       where: { email: data.email }
     });
     if (isEmailTaken) {
       throw new Error("Email is already in use");
     }
-    const salt = await bcrypt.genSalt();
-    const hashedPass = await bcrypt.hash(data.password, salt);
+    const hashedPass = await hashPassword(data.password);
     const userData = {
       ...data,
       password: hashedPass,
@@ -30,9 +34,13 @@ export const Mutation = {
     return result;
   },
   createPost: async (parent, args, ctx: AppContextModel, info): Promise<PostModel> => {
-    const { data } = args;
-    const isUserAvailable = ctx.dbClient.user.findFirst({
-      where: { id: data.authorId }
+    const authData = extractJwtAuth(ctx.request);
+    const data = {
+      ...args.data,
+      authorId: authData.userId
+    }
+    const isUserAvailable = ctx.dbClient.user.findUnique({
+      where: { id: authData.userId }
     });
     if (!isUserAvailable) {
       throw new Error('User is not defined');
@@ -41,14 +49,18 @@ export const Mutation = {
     return result;
   },
   createComment: async (parent, args, ctx: AppContextModel, info): Promise<CommentModel> => {
-    const { data } = args;
-    const isUserAvailable = ctx.dbClient.user.findFirst({
+    const authData = extractJwtAuth(ctx.request);
+    const data = { 
+      ...args.data,
+      authorId: authData.userId
+    };
+    const isUserAvailable = ctx.dbClient.user.findUnique({
       where: { id: data.authorId }
     });
     if (!isUserAvailable) {
       throw new Error('User is not defined');
     }
-    const isPostAvailable = ctx.dbClient.post.findFirst({
+    const isPostAvailable = ctx.dbClient.post.findUnique({
       where: { id: data.postId }
     });
     if (!isPostAvailable) {
@@ -58,14 +70,18 @@ export const Mutation = {
     return result;
   },
   createLike: async (parent, args, ctx: AppContextModel, info): Promise<LikeModel> => {
-    const { data } = args;
-    const isUserAvailable = ctx.dbClient.user.findFirst({
+    const authData = extractJwtAuth(ctx.request);
+    const data = {
+      ...args.data,
+      userId: authData.userId
+    };
+    const isUserAvailable = ctx.dbClient.user.findUnique({
       where: { id: data.userId }
     });
     if (!isUserAvailable) {
       throw new Error('User is not defined');
     }
-    const isPostAvailable = ctx.dbClient.post.findFirst({
+    const isPostAvailable = ctx.dbClient.post.findUnique({
       where: { id: data.postId }
     });
     if (!isPostAvailable) {
@@ -73,5 +89,20 @@ export const Mutation = {
     }
     const result = await ctx.dbClient.like.create({ data });
     return result;
+  },
+  login: async (parent, args, ctx: AppContextModel, info): Promise<AuthModel> => {
+    const { data } = args;
+    const userData = await ctx.dbClient.user.findUnique(
+      { where: { email: data.email } }
+    );
+    if (!userData) {
+      throw new Error('Incorrect login data');
+    }
+    await comparePasses(data.password, userData.password);
+    const token = generateJwtToken({ userId: userData.id });
+    return {
+      token,
+      user: userData
+    }
   },
 }

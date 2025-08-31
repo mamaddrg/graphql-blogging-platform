@@ -1,7 +1,9 @@
-import type { PrismaClient } from "@prisma/client"
+import type { PrismaClient } from "@prisma/client";
+import type { IncomingMessage } from "http";
 
 export type AppContextModel = {
-  dbClient: PrismaClient
+  dbClient: PrismaClient,
+  request: IncomingMessage
 }
 
 export type UserModel = {
@@ -37,4 +39,15 @@ export type LikeModel = {
   id: number,
   userId: number,
   createdAt: string | Date
+}
+
+export type AuthModel = {
+  token: string,
+  user: UserModel
+}
+
+export type AuthDataModel = {
+  userId: number,
+  iat: number,
+  exp: number
 }
