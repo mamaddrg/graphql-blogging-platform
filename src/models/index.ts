@@ -41,6 +41,35 @@ export type LikeModel = {
   createdAt: string | Date
 }
 
+export type UserPublicModel = {
+  id?: number,
+  name?: string,
+  bio?: string,
+  createdAt?: string | Date
+}
+
+export type PostPublicModel = {
+  id: number,
+  title: String,
+  content: String,
+  authorId: number,
+  createdAt: string | Date
+}
+
+export type CommentPublicModel = {
+  id: number,
+  content: String,
+  authorId: number,
+  postId: number,
+  createdAt: string | Date
+}
+
+export type LikePublicModel = {
+  id: number,
+  userId: number,
+  createdAt: string | Date
+}
+
 export type AuthModel = {
   token: string,
   user: UserModel

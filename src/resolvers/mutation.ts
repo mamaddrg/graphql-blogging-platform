@@ -87,6 +87,12 @@ export const Mutation = {
     if (!isPostAvailable) {
       throw new Error('Post is not defined');
     }
+    const isAlreadyLiked = await ctx.dbClient.like.findFirst(
+      { where: { userId: authData.userId, postId: data.postId } }
+    );
+    if (isAlreadyLiked) {
+      throw new Error("Post is already liked");
+    }
     const result = await ctx.dbClient.like.create({ data });
     return result;
   },

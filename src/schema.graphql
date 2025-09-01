@@ -2,7 +2,6 @@ type User {
   id: ID!
   name: String!
   email: String!
-  password: String!
   bio: String
   createdAt: String!
   updatedAt: String
@@ -45,11 +44,56 @@ type Like {
   post: Post!
 }
 
+type UserPublic {
+  id: ID!
+  name: String!
+  bio: String
+  createdAt: String!
+  posts: [PostPublic!]!
+  comments: [CommentPublic!]!
+  likes: [LikePublic!]!
+}
+
+type PostPublic {
+  id: ID!
+  title: String!
+  content: String!
+  authorId: Int!
+  createdAt: String!
+  author: UserPublic!
+  comments: [CommentPublic!]!
+  likes: [LikePublic!]!
+}
+
+type CommentPublic {
+  id: ID!
+  content: String!
+  authorId: Int!
+  postId: Int!
+  createdAt: String!
+  author: UserPublic!
+  post: PostPublic!
+  likes: [LikePublic!]!
+}
+
+type LikePublic {
+  id: ID!
+  userId: Int!
+  postId: Int!
+  createdAt: String!
+  user: UserPublic!
+  post: PostPublic!
+}
+
 type Query {
-  users: [User]
-  posts: [Post]
-  comments: [Comment]
-  likes: [Like]
+  users(limit: Int, offset: Int, contains: String): [UserPublic]
+  posts(limit: Int, offset: Int, contains: String, authorId: Int): [PostPublic]
+  comments(limit: Int, offset: Int, contains: String, authorId: Int, postId: Int): [CommentPublic]
+  likes(limit: Int, offset: Int, userId: Int, postId: Int): [LikePublic]
+  me: User!
+  myPosts(limit: Int, offset: Int, published: Boolean): [Post!]!
+  myComments(limit: Int, offset: Int): [Comment!]!
+  myLikes(limit: Int, offset: Int): [Like!]!
 }
 
 type Mutation {

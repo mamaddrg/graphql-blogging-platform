@@ -25,6 +25,10 @@ const server = new ApolloServer({
     Post,
     Comment,
     Like,
+    UserPublic: User,
+    PostPublic: Post,
+    CommentPublic: Comment,
+    LikePublic: Like,
     Mutation
   },
 });
