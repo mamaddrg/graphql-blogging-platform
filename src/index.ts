@@ -25,6 +25,10 @@ const server = new ApolloServer({
     Post,
     Comment,
     Like,
+    UserPublic: User,
+    PostPublic: Post,
+    CommentPublic: Comment,
+    LikePublic: Like,
     Mutation
   },
 });
@@ -36,7 +40,8 @@ startStandaloneServer(server, {
   context: async ({ req, res }) => {
     const prismaClient = new PrismaClient();
     return {
-      dbClient: prismaClient
+      dbClient: prismaClient,
+      request: req
     }
   }
 }).then((data) => {

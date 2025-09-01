@@ -2,9 +2,9 @@ type User {
   id: ID!
   name: String!
   email: String!
-  password: String!
   bio: String
   createdAt: String!
+  updatedAt: String
   posts: [Post!]!
   comments: [Comment!]!
   likes: [Like!]!
@@ -16,6 +16,8 @@ type Post {
   content: String!
   published: Boolean!
   authorId: Int!
+  createdAt: String!
+  updatedAt: String
   author: User!
   comments: [Comment!]!
   likes: [Like!]!
@@ -26,6 +28,8 @@ type Comment {
   content: String!
   authorId: Int!
   postId: Int!
+  createdAt: String!
+  updatedAt: String
   author: User!
   post: Post!
   likes: [Like!]!
@@ -35,17 +39,99 @@ type Like {
   id: ID!
   userId: Int!
   postId: Int!
+  createdAt: String!
   user: User!
   post: Post!
 }
 
+type UserPublic {
+  id: ID!
+  name: String!
+  bio: String
+  createdAt: String!
+  posts: [PostPublic!]!
+  comments: [CommentPublic!]!
+  likes: [LikePublic!]!
+}
+
+type PostPublic {
+  id: ID!
+  title: String!
+  content: String!
+  authorId: Int!
+  createdAt: String!
+  author: UserPublic!
+  comments: [CommentPublic!]!
+  likes: [LikePublic!]!
+}
+
+type CommentPublic {
+  id: ID!
+  content: String!
+  authorId: Int!
+  postId: Int!
+  createdAt: String!
+  author: UserPublic!
+  post: PostPublic!
+  likes: [LikePublic!]!
+}
+
+type LikePublic {
+  id: ID!
+  userId: Int!
+  postId: Int!
+  createdAt: String!
+  user: UserPublic!
+  post: PostPublic!
+}
+
 type Query {
-  users: [User]
-  posts: [Post]
-  comments: [Comment]
-  likes: [Like]
+  users(limit: Int, offset: Int, contains: String): [UserPublic]
+  posts(limit: Int, offset: Int, contains: String, authorId: Int): [PostPublic]
+  comments(limit: Int, offset: Int, contains: String, authorId: Int, postId: Int): [CommentPublic]
+  likes(limit: Int, offset: Int, userId: Int, postId: Int): [LikePublic]
+  me: User!
+  myPosts(limit: Int, offset: Int, published: Boolean): [Post!]!
+  myComments(limit: Int, offset: Int): [Comment!]!
+  myLikes(limit: Int, offset: Int): [Like!]!
 }
 
 type Mutation {
-  createUser(name: String!, email: String!, password: String!, bio: String): User!
+  createUser(data: CreateUserInput!): User!
+  createPost(data: CreatePostInput!): Post!
+  createComment(data: CreateCommentInput!): Comment!
+  createLike(data: CreateLikeInput!): Like!
+  login(data: LoginInput): AuthPayload!
+}
+
+input CreateUserInput {
+  name: String!
+  email: String!
+  password: String!
+  bio: String
+}
+
+input CreatePostInput {
+  title: String!
+  content: String!
+  published: Boolean
+}
+
+input CreateCommentInput {
+  content: String!
+  postId: Int!
+}
+
+input CreateLikeInput {
+  postId: Int!
+}
+
+input LoginInput {
+  email: String!
+  password: String!
+}
+
+type AuthPayload {
+  token: String!
+  user: User!
 }
