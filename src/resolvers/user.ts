@@ -1,4 +1,4 @@
-import type { AppContextModel, CommentModel, LikeModel, PostModel } from '../models';
+import type { AppContextModel, CommentModel, LikeModel, PostModel } from '../models/index.js';
 
 export const User = {
   posts: async (parent, args, ctx: AppContextModel, info): Promise<PostModel[]> => {

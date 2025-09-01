@@ -11,7 +11,7 @@ import type {
   CommentModel,
   LikeModel,
   AuthModel
-} from '../models';
+} from '../models/index.js';
 
 export const Mutation = {
   createUser: async (parent, args, ctx: AppContextModel, info): Promise<UserModel> => {
@@ -46,6 +46,9 @@ export const Mutation = {
       throw new Error('User is not defined');
     }
     const result = await ctx.dbClient.post.create({ data });
+    if (data.published) {
+      await ctx.pubsub.publish('POST_CREATED', { postCreated: result });
+    }
     return result;
   },
   createComment: async (parent, args, ctx: AppContextModel, info): Promise<CommentModel> => {

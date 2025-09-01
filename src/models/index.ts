@@ -1,9 +1,11 @@
 import type { PrismaClient } from "@prisma/client";
 import type { IncomingMessage } from "http";
+import type { PubSub } from 'graphql-subscriptions';
 
 export type AppContextModel = {
   dbClient: PrismaClient,
-  request: IncomingMessage
+  request: IncomingMessage,
+  pubsub: PubSub
 }
 
 export type UserModel = {

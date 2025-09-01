@@ -111,6 +111,10 @@ type Mutation {
   deleteLike(id: Int!): Like!
 }
 
+type Subscription {
+  postCreated: PostPublic!
+}
+
 input CreateUserInput {
   name: String!
   email: String!
