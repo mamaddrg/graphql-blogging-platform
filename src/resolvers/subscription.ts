@@ -1,13 +1,23 @@
-// src/resolvers/subscription.ts
+import { subscriptionConsts } from '../constants/index.js';
 import type { AppContextModel } from '../models/index.js';
 
 export const Subscription = {
-  postCreated: {
-    subscribe: (_: unknown, __: unknown, { pubsub }: AppContextModel) =>
-      pubsub.asyncIterableIterator(['POST_CREATED']),
+  post: {
+    subscribe: (parent, args, ctx: AppContextModel, info) => {
+      const pubSub = ctx.pubsub;
+      return pubSub.asyncIterableIterator([subscriptionConsts.post.triggerName]);
+    }
   },
-  commentAdded: {
-    subscribe: (_: unknown, args: { postId: number }, { pubsub }: AppContextModel) =>
-      pubsub.asyncIterableIterator([`COMMENT_ADDED:${args.postId}`]),
+  comment: {
+    subscribe: (parent, args, ctx: AppContextModel, info) => {
+      const pubSub = ctx.pubsub;
+      return pubSub.asyncIterableIterator([`${subscriptionConsts.comment.triggerName}:${args.postId}`]);
+    }
+  },
+  like: {
+    subscribe: (parent, args, ctx: AppContextModel, info) => {
+      const pubSub = ctx.pubsub;
+      return pubSub.asyncIterableIterator([`${subscriptionConsts.like.triggerName}:${args.postId}`]);
+    }
   },
 };

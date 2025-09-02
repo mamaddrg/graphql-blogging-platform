@@ -1,3 +1,4 @@
+import { subscriptionConsts } from '../constants/index.js';
 import { 
   generateJwtToken, 
   extractJwtAuth, 
@@ -47,7 +48,15 @@ export const Mutation = {
     }
     const result = await ctx.dbClient.post.create({ data });
     if (data.published) {
-      await ctx.pubsub.publish('POST_CREATED', { postCreated: result });
+      await ctx.pubsub.publish(
+        subscriptionConsts.post.triggerName, 
+        {
+          post: {
+            mutation: subscriptionConsts.post.mutation.created, 
+            data: result 
+          }
+        }
+      );
     }
     return result;
   },
@@ -70,6 +79,15 @@ export const Mutation = {
       throw new Error('Post is not defined');
     }
     const result = await ctx.dbClient.comment.create({ data });
+    await ctx.pubsub.publish(
+      `${subscriptionConsts.comment.triggerName}:${data.postId}`,
+      {
+        comment: {
+          mutation: subscriptionConsts.comment.mutation.created,
+          data: result
+        }
+      }
+    );
     return result;
   },
   createLike: async (parent, args, ctx: AppContextModel, info): Promise<LikeModel> => {
@@ -97,6 +115,15 @@ export const Mutation = {
       throw new Error("Post is already liked");
     }
     const result = await ctx.dbClient.like.create({ data });
+    await ctx.pubsub.publish(
+      `${subscriptionConsts.like.triggerName}:${data.postId}`,
+      {
+        like: {
+          mutation: subscriptionConsts.like.mutation.created,
+          data: result
+        }
+      }
+    );
     return result;
   },
   login: async (parent, args, ctx: AppContextModel, info): Promise<AuthModel> => {
@@ -184,6 +211,43 @@ export const Mutation = {
       });
     }
 
+    // fire subscription based on publish status changes
+    if (data.published != null && data.published !== postRecord.published) {
+      if (data.published === true && postRecord.published === false) {
+        // post has been changed to publish, so we should trigger create post
+        await ctx.pubsub.publish(
+          subscriptionConsts.post.triggerName, 
+          {
+            post: {
+              mutation: subscriptionConsts.post.mutation.created, 
+              data: result 
+            }
+          }
+        );
+      } else {
+        // post has been changed to unpublish, so we should trigger create post
+        await ctx.pubsub.publish(
+          subscriptionConsts.post.triggerName, 
+          {
+            post: {
+              mutation: subscriptionConsts.post.mutation.deleted, 
+              data: result 
+            }
+          }
+        );
+      }
+    } else {
+      await ctx.pubsub.publish(
+        subscriptionConsts.post.triggerName, 
+        {
+          post: {
+            mutation: subscriptionConsts.post.mutation.updated, 
+            data: result 
+          }
+        }
+      );
+    }
+
     return result;
   },
   updateComment: async (parent, args, ctx: AppContextModel, info): Promise<CommentModel> => {
@@ -235,6 +299,15 @@ export const Mutation = {
       await tx.comment.deleteMany({ where: { postId: id } });
       result = await tx.post.delete({ where: { id } });
     });
+    await ctx.pubsub.publish(
+      subscriptionConsts.post.triggerName, 
+      {
+        post: {
+          mutation: subscriptionConsts.post.mutation.deleted, 
+          data: result 
+        }
+      }
+    );
     return result;
   },
   deleteComment: async (parent, args, ctx: AppContextModel, info): Promise<CommentModel> => {
@@ -248,6 +321,15 @@ export const Mutation = {
       throw new Error("You're not authorized to perform this action");
     }
     const result = await ctx.dbClient.comment.delete({ where: { id } });
+    await ctx.pubsub.publish(
+      `${subscriptionConsts.comment.triggerName}:${commentRecord.postId}`,
+      {
+        comment: {
+          mutation: subscriptionConsts.comment.mutation.deleted,
+          data: result
+        }
+      }
+    );
     return result;
   },
   deleteLike: async (parent, args, ctx: AppContextModel, info): Promise<LikeModel> => {
@@ -261,6 +343,15 @@ export const Mutation = {
       throw new Error("You're not authorized to perform this action");
     }
     const result = await ctx.dbClient.like.delete({ where: { id } });
+    await ctx.pubsub.publish(
+      `${subscriptionConsts.comment.triggerName}:${likeRecord.postId}`,
+      {
+        like: {
+          mutation: subscriptionConsts.like.mutation.deleted,
+          data: result
+        }
+      }
+    );
     return result;
   },
 }

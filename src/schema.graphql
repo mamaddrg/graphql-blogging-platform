@@ -112,7 +112,30 @@ type Mutation {
 }
 
 type Subscription {
-  postCreated: PostPublic!
+  post: PostSubscriptionType!
+  comment(postId: Int!): CommentSubscriptionType!
+  like(postId: Int!): LikeSubscriptionType!
+}
+
+enum MutationType {
+  CREATED
+  UPDATED
+  DELETED
+}
+
+type PostSubscriptionType {
+  mutation: MutationType!,
+  data: PostPublic
+}
+
+type CommentSubscriptionType {
+  mutation: MutationType!,
+  data: CommentPublic
+}
+
+type LikeSubscriptionType {
+  mutation: MutationType!,
+  data: LikePublic
 }
 
 input CreateUserInput {
