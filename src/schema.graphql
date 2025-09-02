@@ -105,10 +105,37 @@ type Mutation {
   updateUser(data: UpdateUserInput!): User!
   updatePost(id: Int!, data: UpdatePostInput!): Post!
   updateComment(id: Int!, data: UpdateCommentInput!): Comment!
-  deleteUser(): User!
+  deleteUser: User!
   deletePost(id: Int!): Post!
-  deleteComment(id: Int!) Comment!
-  deleteLike(id: Int!) Like!
+  deleteComment(id: Int!): Comment!
+  deleteLike(id: Int!): Like!
+}
+
+type Subscription {
+  post: PostSubscriptionType!
+  comment(postId: Int!): CommentSubscriptionType!
+  like(postId: Int!): LikeSubscriptionType!
+}
+
+enum MutationType {
+  CREATED
+  UPDATED
+  DELETED
+}
+
+type PostSubscriptionType {
+  mutation: MutationType!,
+  data: PostPublic
+}
+
+type CommentSubscriptionType {
+  mutation: MutationType!,
+  data: CommentPublic
+}
+
+type LikeSubscriptionType {
+  mutation: MutationType!,
+  data: LikePublic
 }
 
 input CreateUserInput {
@@ -143,7 +170,7 @@ type AuthPayload {
   user: User!
 }
 
-type UpdateUserInput {
+input UpdateUserInput {
   name: String
   email: String
   password: String
@@ -156,6 +183,6 @@ input UpdatePostInput {
   published: Boolean
 }
 
-input updateCommentInput {
+input UpdateCommentInput {
   content: String
 }

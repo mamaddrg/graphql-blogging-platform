@@ -1,4 +1,4 @@
-import type { AppContextModel, PostModel, UserModel } from '../models';
+import type { AppContextModel, PostModel, UserModel } from '../models/index.js';
 
 export const Like = {
   post: async (parent, args, ctx: AppContextModel, info): Promise<PostModel> => {

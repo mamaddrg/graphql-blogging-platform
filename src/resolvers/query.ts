@@ -10,7 +10,7 @@ import type {
   UserPublicModel,
   PostPublicModel,
   LikePublicModel
-} from '../models';
+} from '../models/index.js';
 
 export const Query = {
   users: async (parent, args, ctx: AppContextModel, info): Promise<UserPublicModel[]> => {

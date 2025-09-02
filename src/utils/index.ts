@@ -2,7 +2,7 @@ import JWT from 'jsonwebtoken';
 import bcrypt from 'bcrypt';
 
 import type { IncomingMessage } from 'http';
-import type { AuthDataModel } from '../models';
+import type { AuthDataModel } from '../models/index.js';
 
 export const generateJwtToken = (data: any): string => {
   const token = JWT.sign(
